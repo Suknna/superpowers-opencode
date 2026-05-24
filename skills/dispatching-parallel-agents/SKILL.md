@@ -65,12 +65,14 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
-```typescript
-// In Claude Code / AI environment
-Task("Fix agent-tool-abort.test.ts failures")
-Task("Fix batch-completion-behavior.test.ts failures")
-Task("Fix tool-approval-race-conditions.test.ts failures")
-// All three run concurrently
+```markdown
+Dispatch three OpenCode subagents in parallel:
+
+- Agent 1: Fix `agent-tool-abort.test.ts` failures
+- Agent 2: Fix `batch-completion-behavior.test.ts` failures
+- Agent 3: Fix `tool-approval-race-conditions.test.ts` failures
+
+All three run concurrently and return focused summaries.
 ```
 
 ### 4. Review and Integrate
