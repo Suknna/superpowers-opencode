@@ -3,7 +3,7 @@
 Use this template when dispatching an implementer subagent.
 
 ```
-Task tool (general-purpose):
+OpenCode subagent:
   description: "Implement Task N: [task name]"
   prompt: |
     You are implementing Task N: [task name]
@@ -29,12 +29,13 @@ Task tool (general-purpose):
     ## Your Job
 
     Once you're clear on requirements:
-    1. Implement exactly what the task specifies
-    2. Write tests (following TDD if task says to)
-    3. Verify implementation works
-    4. Commit your work
-    5. Self-review (see below)
-    6. Report back
+    1. Before reading or editing implementation files, explicitly invoke/load `superpowers:goal-driven-development` and follow its checklist for this task. If your environment cannot load skills, say so in your report and list the `goal-driven-development` checklist items you followed.
+    2. Implement exactly what the task specifies.
+    3. Write or update tests before reporting DONE. Tests must cover the accepted behavior and must not preserve stale architecture or implementation details.
+    4. Verify implementation works.
+    5. Commit your work.
+    6. Self-review (see below).
+    7. Report back.
 
     Work from: [directory]
 
@@ -79,6 +80,7 @@ Task tool (general-purpose):
     - Did I fully implement everything in the spec?
     - Did I miss any requirements?
     - Are there edge cases I didn't handle?
+    - Did I satisfy the `superpowers:goal-driven-development` completion checklist before reporting DONE?
 
     **Quality:**
     - Is this my best work?
@@ -92,7 +94,7 @@ Task tool (general-purpose):
 
     **Testing:**
     - Do tests actually verify behavior (not just mock behavior)?
-    - Did I follow TDD if required?
+    - Do tests cover the goal, and did I avoid keeping old code only to satisfy stale tests?
     - Are tests comprehensive?
 
     If you find issues during self-review, fix them now before reporting.

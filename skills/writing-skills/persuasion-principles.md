@@ -17,14 +17,14 @@ LLMs respond to the same persuasion principles as humans. Understanding this psy
 - Eliminates decision fatigue and rationalization
 
 **When to use:**
-- Discipline-enforcing skills (TDD, verification requirements)
+- Discipline-enforcing skills (goal-driven development, verification requirements)
 - Safety-critical practices
 - Established best practices
 
 **Example:**
 ```markdown
-✅ Write code before test? Delete it. Start over. No exceptions.
-❌ Consider writing tests first when feasible.
+✅ Claiming done before acceptance evidence? Stop and verify. No exceptions.
+❌ Consider verifying when feasible.
 ```
 
 ### 2. Commitment
@@ -33,7 +33,7 @@ LLMs respond to the same persuasion principles as humans. Understanding this psy
 **How it works in skills:**
 - Require announcements: "Announce skill usage"
 - Force explicit choices: "Choose A, B, or C"
-- Use tracking: TodoWrite for checklists
+- Use tracking: `todowrite` for checklists
 
 **When to use:**
 - Ensuring skills are actually followed
@@ -80,8 +80,8 @@ LLMs respond to the same persuasion principles as humans. Understanding this psy
 
 **Example:**
 ```markdown
-✅ Checklists without TodoWrite tracking = steps get skipped. Every time.
-❌ Some people find TodoWrite helpful for checklists.
+✅ Checklists without `todowrite` tracking = steps get skipped. Every time.
+❌ Some people find `todowrite` helpful for checklists.
 ```
 
 ### 5. Unity
