@@ -99,8 +99,10 @@ To pin a specific version, use a branch or tag:
 
 The plugin does two things:
 
-1. **Injects bootstrap context** via the `experimental.chat.system.transform` hook, adding superpowers awareness to every conversation.
-2. **Registers the skills directory** via the `config` hook, so OpenCode discovers all superpowers skills without symlinks or manual config.
+1. **Registers the `superpowers` agent** via the `config` hook. Clean installs default to this agent so the Superpowers bootstrap prompt is active at session start.
+2. **Registers the skills directory** via the `config` hook, so OpenCode discovers all Superpowers skills without symlinks or manual config.
+
+Restart OpenCode after plugin or agent changes; config-time files are loaded at startup.
 
 ### Tool Mapping
 
@@ -147,8 +149,9 @@ Then use the installed package path in `opencode.json`:
 
 ### Bootstrap not appearing
 
-1. Check OpenCode version supports `experimental.chat.system.transform` hook
-2. Restart OpenCode after config changes
+1. Restart OpenCode after plugin, agent, or config changes
+2. Check OpenCode version supports plugin `config` hooks
+3. If you configured another `default_agent`, select `superpowers` manually or set `default_agent` to `superpowers`
 
 ## Getting Help
 

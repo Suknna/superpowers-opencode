@@ -1,13 +1,12 @@
 /**
  * Superpowers plugin for OpenCode.ai
  *
- * Injects superpowers bootstrap context via system prompt transform.
- * Auto-registers skills directory via config hook (no symlinks needed).
+ * Auto-registers the superpowers primary agent and skills directory via the
+ * config hook (no symlinks needed).
  */
 
 import path from 'path';
 import fs from 'fs';
-import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -33,66 +32,34 @@ const extractAndStripFrontmatter = (content) => {
   return { frontmatter, content: body };
 };
 
-// Normalize a path: trim whitespace, expand ~, resolve to absolute
-const normalizePath = (p, homeDir) => {
-  if (!p || typeof p !== 'string') return null;
-  let normalized = p.trim();
-  if (!normalized) return null;
-  if (normalized.startsWith('~/')) {
-    normalized = path.join(homeDir, normalized.slice(2));
-  } else if (normalized === '~') {
-    normalized = homeDir;
-  }
-  return path.resolve(normalized);
-};
-
-// Module-level cache for bootstrap content.
-// The SKILL.md file does not change during a session, so reading + parsing it
-// once eliminates redundant fs.existsSync + fs.readFileSync + regex work on
-// every agent step.  See #1202 for the full analysis.
-let _bootstrapCache = undefined; // undefined = not yet loaded, null = file missing
+// Module-level cache for the agent prompt. The prompt file does not change
+// during a session, so reading + parsing it once eliminates redundant disk
+// work on each config load. See #1202 for the original bootstrap analysis.
+let _agentPromptCache = undefined; // undefined = not yet loaded, null = file missing
 
 export const SuperpowersPlugin = async ({ client, directory }) => {
-  const homeDir = os.homedir();
   const superpowersSkillsDir = path.resolve(__dirname, '../../skills');
-  const envConfigDir = normalizePath(process.env.OPENCODE_CONFIG_DIR, homeDir);
-  const configDir = envConfigDir || path.join(homeDir, '.config/opencode');
+  const superpowersAgentPath = path.resolve(__dirname, '../../agents/superpowers.md');
 
-  // Helper to generate bootstrap content (cached after first call)
-  const getBootstrapContent = () => {
-    // Return cached result on subsequent calls
-    if (_bootstrapCache !== undefined) return _bootstrapCache;
+  // Helper to load the superpowers agent prompt (cached after first call)
+  const getSuperpowersAgent = () => {
+    if (_agentPromptCache !== undefined) return _agentPromptCache;
 
-    // Try to load using-superpowers skill
-    const skillPath = path.join(superpowersSkillsDir, 'using-superpowers', 'SKILL.md');
-    if (!fs.existsSync(skillPath)) {
-      _bootstrapCache = null;
+    if (!fs.existsSync(superpowersAgentPath)) {
+      _agentPromptCache = null;
       return null;
     }
 
-    const fullContent = fs.readFileSync(skillPath, 'utf8');
-    const { content } = extractAndStripFrontmatter(fullContent);
+    const fullContent = fs.readFileSync(superpowersAgentPath, 'utf8');
+    const { frontmatter, content } = extractAndStripFrontmatter(fullContent);
 
-    const toolMapping = `**Tool Mapping for OpenCode:**
-When skills reference tools you don't have, substitute OpenCode equivalents:
-- \`TodoWrite\` → \`todowrite\`
-- \`Task\` tool with subagents → Use OpenCode's subagent system (@mention)
-- \`Skill\` tool → OpenCode's native \`skill\` tool
-- \`Read\`, \`Write\`, \`Edit\`, \`Bash\` → Your native tools
+    _agentPromptCache = {
+      description: frontmatter.description || 'Activates Superpowers workflows and requires relevant skill invocation before responses or actions.',
+      mode: frontmatter.mode || 'primary',
+      prompt: content.trimStart(),
+    };
 
-Use OpenCode's native \`skill\` tool to list and load skills.`;
-
-    _bootstrapCache = `<EXTREMELY_IMPORTANT>
-You have superpowers.
-
-**IMPORTANT: The using-superpowers skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "using-superpowers" again - that would be redundant.**
-
-${content}
-
-${toolMapping}
-</EXTREMELY_IMPORTANT>`;
-
-    return _bootstrapCache;
+    return _agentPromptCache;
   };
 
   return {
@@ -106,30 +73,19 @@ ${toolMapping}
       if (!config.skills.paths.includes(superpowersSkillsDir)) {
         config.skills.paths.push(superpowersSkillsDir);
       }
-    },
 
-    // Inject bootstrap into the first user message of each session.
-    // Using a user message instead of a system message avoids:
-    //   1. Token bloat from system messages repeated every turn (#750)
-    //   2. Multiple system messages breaking Qwen and other models (#894)
-    //
-    // The hook fires on every agent step (not just every turn) because
-    // opencode's prompt.ts reloads messages from DB each step.  Fresh message
-    // arrays may need injection again, so getBootstrapContent() must not do
-    // repeated disk work.
-    'experimental.chat.messages.transform': async (_input, output) => {
-      const bootstrap = getBootstrapContent();
-      if (!bootstrap || !output.messages.length) return;
-      const firstUser = output.messages.find(m => m.info.role === 'user');
-      if (!firstUser || !firstUser.parts.length) return;
+      const superpowersAgent = getSuperpowersAgent();
+      if (superpowersAgent) {
+        config.agent = config.agent || {};
+        config.agent.superpowers = {
+          ...config.agent.superpowers,
+          ...superpowersAgent,
+        };
 
-      // Guard: skip if first user message already contains bootstrap.
-      // This prevents double injection when OpenCode passes an already
-      // transformed in-memory message array through the hook again.
-      if (firstUser.parts.some(p => p.type === 'text' && p.text.includes('EXTREMELY_IMPORTANT'))) return;
-
-      const ref = firstUser.parts[0];
-      firstUser.parts.unshift({ ...ref, type: 'text', text: bootstrap });
+        if (!config.default_agent) {
+          config.default_agent = 'superpowers';
+        }
+      }
     }
   };
 };

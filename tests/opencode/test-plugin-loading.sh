@@ -14,6 +14,8 @@ source "$SCRIPT_DIR/setup.sh"
 trap cleanup_test_env EXIT
 
 plugin_link="$OPENCODE_CONFIG_DIR/plugins/superpowers.js"
+removed_skill_name="using-superpowers"
+removed_skill_file="$SUPERPOWERS_SKILLS_DIR/$removed_skill_name/SKILL.md"
 
 # Test 1: Verify plugin file exists and is registered
 echo "Test 1: Checking plugin registration..."
@@ -42,17 +44,33 @@ else
     exit 1
 fi
 
-# Test 3: Check using-superpowers skill exists (critical for bootstrap)
-echo "Test 3: Checking using-superpowers skill (required for bootstrap)..."
-if [ -f "$SUPERPOWERS_SKILLS_DIR/using-superpowers/SKILL.md" ]; then
-    echo "  [PASS] using-superpowers skill exists"
+# Test 3: Check superpowers agent prompt exists
+echo "Test 3: Checking superpowers agent prompt..."
+if [ -f "$SUPERPOWERS_AGENT_FILE" ]; then
+    echo "  [PASS] superpowers agent prompt exists"
 else
-    echo "  [FAIL] using-superpowers skill not found (required for bootstrap)"
+    echo "  [FAIL] superpowers agent prompt not found at $SUPERPOWERS_AGENT_FILE"
     exit 1
 fi
 
-# Test 4: Verify plugin JavaScript syntax (basic check)
-echo "Test 4: Checking plugin JavaScript syntax..."
+if grep -q 'If you think there is even a 1% chance a skill might apply' "$SUPERPOWERS_AGENT_FILE"; then
+    echo "  [PASS] superpowers agent contains migrated prompt"
+else
+    echo "  [FAIL] superpowers agent is missing migrated prompt text"
+    exit 1
+fi
+
+# Test 4: Check old using-superpowers skill is removed
+echo "Test 4: Checking old using-superpowers skill is removed..."
+if [ -e "$removed_skill_file" ]; then
+    echo "  [FAIL] old using-superpowers skill still exists"
+    exit 1
+else
+    echo "  [PASS] old using-superpowers skill is removed"
+fi
+
+# Test 5: Verify plugin JavaScript syntax (basic check)
+echo "Test 5: Checking plugin JavaScript syntax..."
 if node --check "$SUPERPOWERS_PLUGIN_FILE" 2>/dev/null; then
     echo "  [PASS] Plugin JavaScript syntax is valid"
 else
@@ -60,8 +78,17 @@ else
     exit 1
 fi
 
-# Test 5: Verify bootstrap text does not reference a hardcoded skills path
-echo "Test 5: Checking bootstrap does not advertise a wrong skills path..."
+# Test 6: Verify plugin does not reference removed using-superpowers skill
+echo "Test 6: Checking plugin no longer depends on using-superpowers skill..."
+if grep -q "skills/$removed_skill_name\|$removed_skill_name.*SKILL.md" "$SUPERPOWERS_PLUGIN_FILE"; then
+    echo "  [FAIL] Plugin still references the removed using-superpowers skill"
+    exit 1
+else
+    echo "  [PASS] Plugin does not reference the removed using-superpowers skill"
+fi
+
+# Test 7: Verify bootstrap text does not reference a hardcoded skills path
+echo "Test 7: Checking bootstrap does not advertise a wrong skills path..."
 if grep -q 'configDir}/skills/superpowers/' "$SUPERPOWERS_PLUGIN_FILE"; then
     echo "  [FAIL] Plugin still references old configDir skills path"
     exit 1
@@ -69,8 +96,8 @@ else
     echo "  [PASS] Plugin does not advertise a misleading skills path"
 fi
 
-# Test 6: Verify personal test skill was created
-echo "Test 6: Checking test fixtures..."
+# Test 8: Verify personal test skill was created
+echo "Test 8: Checking test fixtures..."
 if [ -f "$OPENCODE_CONFIG_DIR/skills/personal-test/SKILL.md" ]; then
     echo "  [PASS] Personal test skill fixture created"
 else

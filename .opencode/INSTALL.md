@@ -41,6 +41,8 @@ Then follow the installation steps above.
 
 ## Usage
 
+OpenCode uses the `superpowers` primary agent for the session-start bootstrap prompt. Use OpenCode's native `skill` tool for all other Superpowers skills.
+
 Use OpenCode's native `skill` tool:
 
 ```
