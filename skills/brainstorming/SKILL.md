@@ -23,7 +23,7 @@ You MUST create a task for each of these items and complete them in order:
 
 1. **Explore project context** — check files, docs, recent commits
 2. **Offer visual companion** (if topic will involve visual questions) — this is its own message, not combined with a clarifying question. See the Visual Companion section below.
-3. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+3. **Ask clarifying or probing questions** — one at a time, based on whether the user is starting from a rough idea or an existing plan
 4. **Propose 2-3 approaches** — with trade-offs and your recommendation
 5. **Present design** — in sections scaled to their complexity, get user approval after each section
 6. **Write design doc** — save to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` and commit
@@ -38,7 +38,9 @@ digraph brainstorming {
     "Explore project context" [shape=box];
     "Visual questions ahead?" [shape=diamond];
     "Offer Visual Companion\n(own message, no other content)" [shape=box];
-    "Ask clarifying questions" [shape=box];
+    "Starting plan provided?" [shape=diamond];
+    "Load Grill Me support doc" [shape=box];
+    "Ask clarifying or probing questions" [shape=box];
     "Propose 2-3 approaches" [shape=box];
     "Present design sections" [shape=box];
     "User approves design?" [shape=diamond];
@@ -49,9 +51,12 @@ digraph brainstorming {
 
     "Explore project context" -> "Visual questions ahead?";
     "Visual questions ahead?" -> "Offer Visual Companion\n(own message, no other content)" [label="yes"];
-    "Visual questions ahead?" -> "Ask clarifying questions" [label="no"];
-    "Offer Visual Companion\n(own message, no other content)" -> "Ask clarifying questions";
-    "Ask clarifying questions" -> "Propose 2-3 approaches";
+    "Visual questions ahead?" -> "Starting plan provided?" [label="no"];
+    "Offer Visual Companion\n(own message, no other content)" -> "Starting plan provided?";
+    "Starting plan provided?" -> "Load Grill Me support doc" [label="yes"];
+    "Starting plan provided?" -> "Ask clarifying or probing questions" [label="no"];
+    "Load Grill Me support doc" -> "Ask clarifying or probing questions";
+    "Ask clarifying or probing questions" -> "Propose 2-3 approaches";
     "Propose 2-3 approaches" -> "Present design sections";
     "Present design sections" -> "User approves design?";
     "User approves design?" -> "Present design sections" [label="no, revise"];
@@ -72,6 +77,11 @@ digraph brainstorming {
 - Check out the current project state first (files, docs, recent commits)
 - Before asking detailed questions, assess scope: if the request describes multiple independent subsystems (e.g., "build a platform with chat, file storage, billing, and analytics"), flag this immediately. Don't spend questions refining details of a project that needs to be decomposed first.
 - If the project is too large for a single spec, help the user decompose into sub-projects: what are the independent pieces, how do they relate, what order should they be built? Then brainstorm the first sub-project through the normal design flow. Each sub-project gets its own spec → plan → implementation cycle.
+- If the user already has a concrete plan, design, architecture sketch, or proposed implementation direction, switch from blank-slate clarification to `Grill Me` mode.
+- Explicit activation: use `Grill Me` mode when the user directly asks to be grilled, challenged, interrogated, or stress-tested.
+- Inferred activation: if the user has a starting plan, design, architecture sketch, or proposed implementation direction but does not directly ask to be grilled or challenged, first say: "You already have a starting plan, so I'll use Grill Me mode: I'll probe the plan one decision at a time and give a recommended answer for each question."
+- Non-activation: if the user only gives a vague idea or asks to build something from scratch, continue with normal brainstorming.
+- When `Grill Me` mode applies, read `skills/brainstorming/grill-me.md` before asking probing questions. Then probe the plan one dependency at a time, include your recommended answer with each question, and inspect the codebase instead of asking the user when the answer is available in the repo.
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - Prefer multiple choice questions when possible, but open-ended is fine too
 - Only one question per message - if a topic needs more exploration, break it into multiple questions
@@ -82,6 +92,8 @@ digraph brainstorming {
 - Propose 2-3 different approaches with trade-offs
 - Present options conversationally with your recommendation and reasoning
 - Lead with your recommended option and explain why
+- In `Grill Me` mode, treat the user's starting plan as the baseline option under review. Do not discard it and restart from a blank slate.
+- Still explore alternatives when they reveal a meaningful trade-off, risk, or simpler path, but frame them against the user's baseline plan.
 
 **Presenting the design:**
 
