@@ -75,6 +75,8 @@ Dispatch three OpenCode subagents in parallel:
 All three run concurrently and return focused summaries.
 ```
 
+Multiple dispatch calls in one response = parallel execution. One per response = sequential.
+
 ### 4. Review and Integrate
 
 When agents return:
